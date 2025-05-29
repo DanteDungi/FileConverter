@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@layer componentents {
+    .card {
+        @apply rounded-xl mx-3 flex justify-center underline underline-offset-8 decoration-2
+    }
+}
