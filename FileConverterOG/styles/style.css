@@ -6,6 +6,37 @@
     transform: translate(400px, 50%);
 } */
 
+body {
+    margin: 0;
+    height: 100vh;
+    /* display: flex; */
+    /* flex-direction: column; */
+}
+
+
+.colunms-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .image-wrapper {
   position: relative;
   display: inline-block;
