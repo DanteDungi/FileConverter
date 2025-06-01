@@ -6,7 +6,7 @@ const sharp = require('sharp');
 const { execSync } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
 
-// Supported conversions
+// Supported conversions mapping
 const SUPPORTED_CONVERSIONS = {
   'image/jpeg': ['png', 'webp'],
   'image/png': ['jpg', 'webp'],
@@ -16,7 +16,7 @@ const SUPPORTED_CONVERSIONS = {
   'video/mp4': ['mp3']
 };
 
-// Helper to check file existence
+// Helper: Check if a file exists (async)
 const fileExists = async (filePath) => {
   try {
     await fs.access(filePath);
@@ -26,13 +26,15 @@ const fileExists = async (filePath) => {
   }
 };
 
-// DOCX to PDF
+// Convert DOCX to PDF using LibreOffice headless mode
 const convertDocxToPdf = async (inputPath, outputPath) => {
   try {
+    // Command varies by platform
     const libreOfficeCmd = process.platform === 'win32' ? 'soffice' : 'libreoffice';
     const outputDir = path.dirname(outputPath);
     const baseName = path.parse(inputPath).name;
 
+    // Run LibreOffice CLI conversion
     execSync(`"${libreOfficeCmd}" --headless --convert-to pdf "${inputPath}" --outdir "${outputDir}"`, {
       stdio: 'pipe'
     });
@@ -44,6 +46,7 @@ const convertDocxToPdf = async (inputPath, outputPath) => {
       throw new Error(`Expected PDF file not found at ${possiblePdfPath}`);
     }
 
+    // Rename if outputPath differs from default LibreOffice output
     if (possiblePdfPath !== outputPath) {
       await fs.rename(possiblePdfPath, outputPath);
     }
@@ -54,17 +57,19 @@ const convertDocxToPdf = async (inputPath, outputPath) => {
   }
 };
 
-// PDF to DOCX
+// Convert PDF to DOCX by extracting text and writing a new DOCX file
 const convertPdfToDocx = async (inputPath, outputPath) => {
   try {
     const pdfParse = require('pdf-parse');
     const docx = require('docx');
     const { Document, Packer, Paragraph, TextRun } = docx;
 
+    // Read PDF buffer and extract text
     const pdfBuffer = await fs.readFile(inputPath);
     const pdfData = await pdfParse(pdfBuffer);
     const text = pdfData.text;
 
+    // Create DOCX document with extracted text
     const doc = new Document({
       sections: [{
         properties: {},
@@ -77,6 +82,7 @@ const convertPdfToDocx = async (inputPath, outputPath) => {
       }]
     });
 
+    // Pack and write the DOCX file
     const buffer = await Packer.toBuffer(doc);
     await fs.writeFile(outputPath, buffer);
 
@@ -87,7 +93,7 @@ const convertPdfToDocx = async (inputPath, outputPath) => {
   }
 };
 
-// Audio conversion
+// Convert audio files to target format using ffmpeg
 const convertAudio = (inputPath, outputPath, targetFormat) => {
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
@@ -98,7 +104,7 @@ const convertAudio = (inputPath, outputPath, targetFormat) => {
   });
 };
 
-// MP4 to MP3 conversion
+// Extract MP3 audio from MP4 video using ffmpeg
 const convertMp4ToMp3 = (inputPath, outputPath) => {
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
@@ -116,6 +122,7 @@ exports.convertFile = async (req, res) => {
   try {
     const { fileId, targetFormat } = req.body;
 
+    // Validate required parameters
     if (!fileId || !targetFormat) {
       return res.status(400).json({ error: 'Missing fileId or targetFormat' });
     }
@@ -126,15 +133,19 @@ exports.convertFile = async (req, res) => {
     const outputFileName = `${path.parse(fileId).name}.${targetFormat}`;
     const outputPath = path.join(convertedDir, outputFileName);
 
+    // Check if original file exists
     if (!(await fileExists(inputPath))) {
       return res.status(404).json({ error: 'Original file not found' });
     }
 
+    // Ensure output directory exists
     await fs.mkdir(convertedDir, { recursive: true });
 
+    // Read input file buffer and detect MIME type
     const inputBuffer = await fs.readFile(inputPath);
     const type = await fileTypeFromBuffer(inputBuffer) || { mime: req.file?.mimetype };
 
+    // Handle conversion based on MIME type and target format
     switch (true) {
       case type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && targetFormat === 'pdf':
         await convertDocxToPdf(inputPath, outputPath);
@@ -162,6 +173,7 @@ exports.convertFile = async (req, res) => {
         return res.status(400).json({ error: 'Unsupported conversion' });
     }
 
+    // Respond with download info
     res.json({
       success: true,
       downloadPath: `/api/download/${outputFileName}`,
@@ -177,7 +189,7 @@ exports.convertFile = async (req, res) => {
   }
 };
 
-// File upload handler
+// File upload handler (redundant with middleware but included)
 exports.uploadFile = async (req, res) => {
   try {
     if (!req.file) {
@@ -187,6 +199,7 @@ exports.uploadFile = async (req, res) => {
       });
     }
 
+    // Supported conversions for reporting purposes
     const supportedConversions = {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['pdf'],
       'application/pdf': ['docx'],
@@ -206,6 +219,7 @@ exports.uploadFile = async (req, res) => {
 
     const availableConversions = supportedConversions[fileInfo.mimetype] || [];
 
+    // Return details of uploaded file and possible conversions
     res.json({
       success: true,
       message: "File uploaded successfully",
@@ -229,15 +243,17 @@ exports.uploadFile = async (req, res) => {
   }
 };
 
-// File download handler
+// File download handler to send converted files
 exports.downloadFile = async (req, res) => {
   try {
     const filePath = path.join(__dirname, '../converted', req.params.fileId);
 
+    // Check if requested file exists
     if (!(await fileExists(filePath))) {
       return res.status(404).json({ error: 'File not found' });
     }
 
+    // Send file as download to client
     res.download(filePath, err => {
       if (err) {
         console.error('Download failed:', err);
