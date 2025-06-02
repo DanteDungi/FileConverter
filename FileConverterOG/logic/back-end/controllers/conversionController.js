@@ -122,7 +122,6 @@ exports.convertFile = async (req, res) => {
   try {
     const { fileId, targetFormat } = req.body;
 
-    // Validate required parameters
     if (!fileId || !targetFormat) {
       return res.status(400).json({ error: 'Missing fileId or targetFormat' });
     }
@@ -133,61 +132,29 @@ exports.convertFile = async (req, res) => {
     const outputFileName = `${path.parse(fileId).name}.${targetFormat}`;
     const outputPath = path.join(convertedDir, outputFileName);
 
-    // Check if original file exists
     if (!(await fileExists(inputPath))) {
       return res.status(404).json({ error: 'Original file not found' });
     }
 
-    // Ensure output directory exists
     await fs.mkdir(convertedDir, { recursive: true });
 
-    // Read input file buffer and detect MIME type
-    const inputBuffer = await fs.readFile(inputPath);
-    const type = await fileTypeFromBuffer(inputBuffer) || { mime: req.file?.mimetype };
+    // Run your conversion logic here (call worker or convert inline) and produce outputPath
 
-    // Handle conversion based on MIME type and target format
-    switch (true) {
-      case type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && targetFormat === 'pdf':
-        await convertDocxToPdf(inputPath, outputPath);
-        break;
+    // After conversion, send the converted file directly
+    const outputBuffer = await fs.readFile(outputPath);
 
-      case type.mime === 'application/pdf' && targetFormat === 'docx':
-        await convertPdfToDocx(inputPath, outputPath);
-        break;
+    // Set headers so browser treats response as file download
+    res.setHeader('Content-Disposition', `attachment; filename="${outputFileName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
 
-      case type.mime === 'audio/mpeg':
-        await convertAudio(inputPath, outputPath, targetFormat);
-        break;
-
-      case type.mime === 'video/mp4' && targetFormat === 'mp3':
-        await convertMp4ToMp3(inputPath, outputPath);
-        break;
-
-      case type.mime?.startsWith('image/'):
-        await sharp(inputBuffer)
-          .toFormat(targetFormat)
-          .toFile(outputPath);
-        break;
-
-      default:
-        return res.status(400).json({ error: 'Unsupported conversion' });
-    }
-
-    // Respond with download info
-    res.json({
-      success: true,
-      downloadPath: `/api/download/${outputFileName}`,
-      fileId: outputFileName
-    });
+    return res.send(outputBuffer);
 
   } catch (err) {
     console.error('Conversion error:', err);
-    res.status(500).json({
-      error: 'Conversion failed',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    return res.status(500).json({ error: 'Conversion failed' });
   }
 };
+
 
 // File upload handler (redundant with middleware but included)
 exports.uploadFile = async (req, res) => {

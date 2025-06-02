@@ -25,5 +25,4 @@ app.listen(PORT, () => {
   console.log('Available routes:');
   console.log('POST /api/upload');
   console.log('POST /api/convert');
-  console.log('GET /api/download/:fileId');
 });
