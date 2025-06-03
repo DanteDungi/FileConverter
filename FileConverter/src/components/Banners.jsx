@@ -1,14 +1,15 @@
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"; import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react";
+import FileConverter from "@/components/FileDownload.jsx";
+import { handleConvert } from "@/components/HandleConvert.jsx";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 const categories = [
     { color: "bg-yellow-300", title: "Images" },
@@ -22,7 +23,7 @@ const allowedFiles = {
     "Videos & Sound": [".mp3", ".mp4"]
 }
 
-const convertions = {
+const conversions = {
     ".png": [".webp", ".jpg"],
     ".jpg": [".webp", ".png"],
     ".jpeg": [".webp", ".png"],
@@ -53,51 +54,10 @@ function Banner({ color, title }) {
     useEffect(() => {
         const fileExtension = getFileExtension(file?.name ?? "null");
 
-        setAllowedConvertions(convertions[fileExtension])
+        setAllowedConvertions(conversions[fileExtension])
     }, [file]);
 
     const [targetFormat, setTargetFormat] = useState("");
-    
-    // const handleUpload = async () => {
-    //   if (!file || !targetFormat) return;
-    //
-    //   const formData = new FormData();
-    //   formData.append("file", file);
-    //
-    //   const uploadResponse = await fetch("uploads", {
-    //     method: "POST",
-    //     body: formData,
-    //   });
-    //
-    //   if (!uploadResponse.ok) {
-    //     alert("File upload failed");
-    //     return;
-    //   }
-    //
-    //   const uploadResult = await uploadResponse.json();
-    //   const fileId = uploadResult?.file?.fileId;
-    //
-    //   const convertResponse = await fetch("/api/convert", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       fileId,
-    //       targetFormat: targetFormat.replace(".", "") // e.g., "pdf", "webp"
-    //     }),
-    //   });
-    //
-    //   if (!convertResponse.ok) {
-    //     alert("Conversion failed");
-    //     return;
-    //   }
-    //
-    //   const convertResult = await convertResponse.json();
-    //   alert("File converted successfully!");
-    //
-    //   console.log("Download path:", convertResult.downloadPath);
-    // };
 
     return (
         <div className="flex flex-col items-center justify-start mx-10">
@@ -128,9 +88,11 @@ function Banner({ color, title }) {
                     </Select>
                 </div>}
                 <span />
+                <FileConverter />
                 <Button
                     className="bg-gray-500 hover:bg-gray-600 text-white w-24 mb-7 mt-auto"
                     disabled={!file || !targetFormat}
+                    onClick={handleConvert}
                 >
                     Submit
                 </Button>
