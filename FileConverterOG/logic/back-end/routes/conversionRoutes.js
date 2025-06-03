@@ -2,14 +2,13 @@ const express = require('express');
 const router = express.Router();
 const uploadMiddleware = require('../middleware/uploadMiddleware');
 const conversionController = require('../controllers/conversionController');
-const path = require('path');
 
 // Supported MIME types and their possible conversion targets
 const supportedConversions = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['pdf'],
   'application/pdf': ['docx'],
-  'image/jpeg': ['png', 'webp', 'pdf'],
-  'image/png': ['jpg', 'webp', 'pdf'],
+  'image/jpeg': ['png', 'webp'],
+  'image/png': ['jpg', 'webp'],
   'video/mp4': ['mp3'],
   'audio/mpeg': ['wav', 'ogg', 'flac']
 };
@@ -43,7 +42,7 @@ router.post('/upload', uploadMiddleware, (req, res) => {
   });
 });
 
-// Route to initiate file conversion
+// Route to initiate file conversion (adds job to queue)
 router.post('/convert', (req, res) => {
   // Validate input
   if (!req.body.fileId || !req.body.targetFormat) {
@@ -55,6 +54,16 @@ router.post('/convert', (req, res) => {
 
   // Delegate conversion task to controller
   conversionController.convertFile(req, res);
+});
+
+// Route to check conversion job status
+router.get('/job/:jobId/status', (req, res) => {
+  conversionController.getJobStatus(req, res);
+});
+
+// Route to download converted files
+router.get('/download/:fileId', (req, res) => {
+  conversionController.downloadFile(req, res);
 });
 
 module.exports = router;
