@@ -20,7 +20,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.1",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
     "@bull-board/api": "^6.9.6",
     "@bull-board/express": "^6.9.6",
     "aws-sdk": "^2.1692.0",
