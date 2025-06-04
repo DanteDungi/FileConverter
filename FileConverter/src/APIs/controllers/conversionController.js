@@ -1,122 +1,160 @@
 const fs = require('fs').promises;
-const fsSync = require('fs');
 const path = require('path');
-const { fileTypeFromBuffer } = require('file-type');
-const sharp = require('sharp');
-const { execSync } = require('child_process');
-const { PDFDocument } = require('pdf-lib');
-const ffmpeg = require('fluent-ffmpeg');
+const { conversionQueue } = require('../queue/queueSetup');
 
-const convertDocxToPdf = async (inputPath, outputPath) => {
-  const libreOfficeCmd = process.platform === 'win32' ? 'soffice' : 'libreoffice';
-  const outputDir = path.dirname(outputPath);
-  const baseName = path.parse(inputPath).name;
-
-  execSync(`"${libreOfficeCmd}" --headless --convert-to pdf "${inputPath}" --outdir "${outputDir}"`, {
-    stdio: 'pipe'
-  });
-
-  const possiblePdfPath = path.join(outputDir, `${baseName}.pdf`);
-  await fs.rename(possiblePdfPath, outputPath);
-};
-
-const convertPdfToDocx = async (inputPath, outputPath) => {
-  const pdfParse = require('pdf-parse');
-  const docx = require('docx');
-  const { Document, Packer, Paragraph, TextRun } = docx;
-
-  const pdfBuffer = await fs.readFile(inputPath);
-  const pdfData = await pdfParse(pdfBuffer);
-  const text = pdfData.text;
-
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: text
-        .split('\n')
-        .filter(line => line.trim() !== '')
-        .map(line => new Paragraph({ children: [new TextRun(line)] }))
-    }]
-  });
-
-  const buffer = await Packer.toBuffer(doc);
-  await fs.writeFile(outputPath, buffer);
-};
-
-const convertAudio = (inputPath, outputPath, targetFormat) => {
-  return new Promise((resolve, reject) => {
-    ffmpeg(inputPath)
-      .toFormat(targetFormat)
-      .on('error', reject)
-      .on('end', resolve)
-      .save(outputPath);
-  });
-};
-
-exports.convertFile = async (req, res) => {
-  const { fileId, targetFormat } = req.body;
-
-  const uploadsDir = path.join(__dirname, './uploads');
-  const convertedDir = path.join(__dirname, './converted');
-  const inputPath = path.join(uploadsDir, fileId);
-  const outputFileName = `${path.parse(fileId).name}.${targetFormat}`;
-  const outputPath = path.join(convertedDir, outputFileName);
-
-  await fs.mkdir(convertedDir, { recursive: true });
-
-  const inputBuffer = await fs.readFile(inputPath);
-  const type = await fileTypeFromBuffer(inputBuffer) || { mime: req.file?.mimetype };
-
-  switch (true) {
-    case type.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && targetFormat === 'pdf':
-      await convertDocxToPdf(inputPath, outputPath);
-      break;
-
-    case type.mime === 'application/pdf' && targetFormat === 'docx':
-      await convertPdfToDocx(inputPath, outputPath);
-      break;
-
-    case type.mime === 'audio/mpeg':
-      await convertAudio(inputPath, outputPath, targetFormat);
-      break;
-
-    case type.mime?.startsWith('image/'):
-      await sharp(inputBuffer)
-        .toFormat(targetFormat)
-        .toFile(outputPath);
-      break;
-
-    // default:
-    //   throw new Error('Unsupported conversion');
+// Helper: Check if a file exists (async)
+const fileExists = async (filePath) => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
   }
-
-  res.json({
-    success: true,
-    downloadPath: `/api/download/${outputFileName}`,
-    fileId: outputFileName
-  });
 };
 
+// Add conversion job to queue
+exports.convertFile = async (req, res) => {
+  try {
+    const { fileId, targetFormat } = req.body;
+
+    if (!fileId || !targetFormat) {
+      return res.status(400).json({ error: 'Missing fileId or targetFormat' });
+    }
+
+    const uploadsDir = path.join(__dirname, '../uploads');
+    const inputPath = path.join(uploadsDir, fileId);
+
+    // Check if original file exists
+    if (!(await fileExists(inputPath))) {
+      return res.status(404).json({ error: 'Original file not found' });
+    }
+
+    // Add conversion job to queue
+    const job = await conversionQueue.add('convert-file', {
+      filePath: inputPath,
+      targetFormat: targetFormat,
+      originalName: fileId
+    });
+
+    // Return job ID so client can check status
+    res.json({
+      success: true,
+      message: 'Conversion job added to queue',
+      jobId: job.id
+    });
+
+  } catch (err) {
+    console.error('Error adding conversion job:', err);
+    return res.status(500).json({ error: 'Failed to queue conversion job' });
+  }
+};
+
+// Check job status
+exports.getJobStatus = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await conversionQueue.getJob(jobId);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const status = await job.getState();
+    
+    let response = {
+      jobId: job.id,
+      status: status,
+      progress: job.progress
+    };
+
+    // If job is completed, include download info
+    if (status === 'completed') {
+      response.downloadReady = true;
+      response.result = job.returnvalue;
+    }
+
+    // If job failed, include error info
+    if (status === 'failed') {
+      response.error = job.failedReason;
+    }
+
+    res.json(response);
+
+  } catch (err) {
+    console.error('Error checking job status:', err);
+    res.status(500).json({ error: 'Failed to check job status' });
+  }
+};
+
+// File upload handler
 exports.uploadFile = async (req, res) => {
-  res.json({
-    success: true,
-    message: "File uploaded successfully",
-    file: {
-      originalName: req.file.originalname,
-      fileId: req.file.filename,
-      filename: req.file.filename,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      path: req.file.path
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No file uploaded'
+      });
     }
-  });
+
+    // Supported conversions for reporting purposes
+    const supportedConversions = {
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['pdf'],
+      'application/pdf': ['docx'],
+      'image/jpeg': ['png', 'webp'],
+      'image/png': ['jpg', 'webp'],
+      'video/mp4': ['mp3'],
+      'audio/mpeg': ['wav', 'ogg', 'flac']
+    };
+
+    const availableConversions = supportedConversions[req.file.mimetype] || [];
+
+    // Return details of uploaded file and possible conversions
+    res.json({
+      success: true,
+      message: "File uploaded successfully",
+      file: {
+        originalName: req.file.originalname,
+        fileId: req.file.filename,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path,
+        conversions: availableConversions
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: 'Upload failed',
+      details: err.message
+    });
+  }
 };
 
+// File download handler to send converted files
 exports.downloadFile = async (req, res) => {
-  const filePath = path.join(__dirname, '../converted', req.params.fileId);
-  res.download(filePath, err => {
-    if (err && !res.headersSent) {
-      res.status(500).json({ error: 'Download failed' });
+  try {
+    const { fileId } = req.params;
+    const filePath = path.join(__dirname, '../converted', fileId);
+
+    // Check if requested file exists
+    if (!(await fileExists(filePath))) {
+      return res.status(404).json({ error: 'File not found' });
     }
-  });
+
+    // Send file as download to client
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error('Download failed:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Download failed' });
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('Download error:', err);
+    res.status(500).json({ error: 'Download failed' });
+  }
 };
