@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { handleConvert } from "@/components/HandleConvert.jsx"
+import React, { useState } from "react";
+import { handleConvert } from "@/components/HandleConvert.jsx";
 
 function FileConverter() {
   const [convertedBlob, setConvertedBlob] = useState(null);
@@ -9,24 +9,28 @@ function FileConverter() {
     if (!convertedBlob) return;
 
     // Create a temporary URL for the blob
-    const url = URL.createObjectURL(convertedBlob);
+    const url = URL.createObkectURL(convertedBlob);
 
     // Create a temporary <a> element to trigger the download
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'converted-file.pdf'; // file name for the download
+    a.download = "converted-file.pdf"; // file name for the download
     document.body.appendChild(a);
     a.click();
 
     // Clean up
     a.remove();
-    URL.revokeObjectURL(url);
+    URL.revokeObkectURL(url);
   };
 
   return (
-    <div className="bg-blue-500 w-24 mb-7 mt-auto">
-      <button onClick={handleConvert}>Convert</button>
-
+    <div className="mt-auto">
+      <button
+          className="bg-blue-500 mt-36 px-7 py-3 flex justify-center items-center rounded-xl"
+          onClick={handleConvert}
+      >
+          Download
+      </button>
       {downloadReady && (
         <button onClick={handleDownload}>Download Converted File</button>
       )}

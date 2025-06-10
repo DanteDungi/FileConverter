@@ -1,8 +1,6 @@
-export const handleConvert = async () => {
-  const fileInput = document.getElementById('file');
-  const file = fileInput?.files?.[0];
-  const targetFormat = 'pdf'; // or this could come from state/props
+// import { Banner } from "@/components/Banners.jsx";
 
+export const handleConvert = async () => {
   if (!file) {
     alert('Please select a file.');
     return;
