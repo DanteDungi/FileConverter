@@ -79,7 +79,7 @@ export const Banner = ({ color, title }) => {
     };
 
     const handleConvert = async () => {
-        if (!fileId || targetFormat) {
+        if (!fileId || !targetFormat) {
             setError("Upload a file and select  first.");
             return;
         }
@@ -147,7 +147,7 @@ export const Banner = ({ color, title }) => {
                 <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">{title}</h1>
                 <div className="bg-red-500 w-60 p-4 rounded-md space-y-2">
                     <Label htmlFor={title}>{title}</Label>
-                    <Input id={title} type="file" accept={allowedFiles[title].join("")} onChange={handleFileChange} />
+                    <Input id={title} type="file" accept={allowedFiles[title]} onChange={handleFileChange} />
                 </div>
                 {file && <div className="flex items-center justify-center mt-2">
                     <h3 className="mr-2">Convert to:</h3>
