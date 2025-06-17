@@ -13,13 +13,13 @@ import {
 const categories = [
     { color: "bg-yellow-300", title: "images" },
     { color: "bg-orange-500", title: "documents" },
-    { color: "bg-red-600", title: "videos & sound" }
+    { color: "bg-red-600", title: "videos & sound" },
 ];
 
 const allowedFiles = {
     images: [".png", ".jpg", ".jpeg"],
     documents: [".docx", ".pdf"],
-    "videos & sound": [".mp3", ".mp4"]
+    "videos & sound": [".mp3", ".mp4"],
 };
 
 const conversions = {
@@ -120,13 +120,13 @@ export const Banner = ({ color, title }) => {
     }, [file]);
 
     return (
-        <div className={`flex flex-col items-center justify-start mx-10 ${color}`}>
+        <div className={`flex flex-col items-center justify-start mx-10 ${color} rounded-xl`}>
             <img
                 src="images/pin.png"
-                className="h-20 w-16 z-10 -mb-8 -ml-8"
+                className="relative h-20 w-16 z-10 -mb-8 -ml-8"
                 alt="Pin"
             />
-            <div className="w-full h-[64%] rounded-xl flex flex-col items-center justify-start pt-8">
+            <div className="w-full h-[64%] flex flex-col items-center justify-start pt-8">
                 <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">
                     {title}
                 </h1>
@@ -158,7 +158,7 @@ export const Banner = ({ color, title }) => {
                 )}
                 <div className="mt-4">
                     <Button
-                        className="bg-gray-500 hover:bg-gray-600 text-white w-24"
+                        className="bg-gray-500 hover:bg-gray-600 text-white w-24 auto-mt"
                         disabled={!file || !targetFormat || doneConverting}
                         onClick={handleConvertClick}
                     >
