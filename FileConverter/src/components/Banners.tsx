@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/select";
 
 const categories = [
-    { color: "bg-yellow-300", title: "images" },
-    { color: "bg-orange-500", title: "documents" },
-    { color: "bg-red-600", title: "videos & sound" },
+    { color: "bg-[#DD4658]", logo: "", title: "Images" },
+    { color: "bg-[#FEBB61]", logo: "", title: "Documents" },
+    { color: "bg-[#3952CF]", logo: "", title: "Videos & sound" },
 ];
 
 const allowedFiles = {
@@ -120,13 +120,13 @@ export const Banner = ({ color, title }) => {
     }, [file]);
 
     return (
-        <div className={`flex flex-col items-center justify-start mx-10 ${color} rounded-xl`}>
+        <div className="flex flex-col items-center justify-start mx-10 bg-color-#00215E">
             <img
                 src="images/pin.png"
                 className="relative h-20 w-16 z-10 -mb-8 -ml-8"
                 alt="Pin"
             />
-            <div className="w-full h-[64%] flex flex-col items-center justify-start pt-8">
+            <div className={`w-full h-[64%] flex flex-col items-center justify-start ${color} rounded-xl  pt-8`}>
                 <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">
                     {title}
                 </h1>
@@ -172,7 +172,7 @@ export const Banner = ({ color, title }) => {
 
 function Banners() {
     return (
-        <div className="grid grid-cols-3 mx-2 gap-2 min-h-screen">
+        <div className="w-full grid grid-cols-3 mx-2 gap-2 min-h-screen">
             {categories.map((category) => (
                 <Banner
                     key={category.title}
