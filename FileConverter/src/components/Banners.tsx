@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/select";
 
 const categories = [
-    { color: "bg-[#DD4658]", logo: "", title: "Images" },
-    { color: "bg-[#FEBB61]", logo: "", title: "Documents" },
-    { color: "bg-[#3952CF]", logo: "", title: "Videos & sound" },
+    { color: "bg-[#DD4658]", logo: "pdf-logo.png", title: "Documents" },
+    { color: "bg-[#FEBB61]", logo: "mp3-logo.png", title: "Videos & sound" },
+    { color: "bg-[#5793FB]", logo: "jpg-logo.png", title: "Images" },
 ];
 
 const allowedFiles = {
-    images: [".png", ".jpg", ".jpeg"],
-    documents: [".docx", ".pdf"],
+    "images": [".png", ".jpg", ".jpeg"],
+    "documents": [".docx", ".pdf"],
     "videos & sound": [".mp3", ".mp4"],
 };
 
@@ -37,7 +37,7 @@ function getFileExtension(filename) {
     return filename.substring(lastDot).toLowerCase();
 }
 
-export const Banner = ({ color, title }) => {
+export const Banner = ({ color, logoIMG, title }) => {
     const [file, setFile] = useState(null);
     const [allowedConversions, setAllowedConversions] = useState([]);
     const [doneConverting, setDoneConverting] = useState(false);
@@ -130,12 +130,12 @@ export const Banner = ({ color, title }) => {
                 <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">
                     {title}
                 </h1>
-                <div className="bg-red-500 w-60 p-4 rounded-md space-y-2">
-                    <Label htmlFor={title}>{title}</Label>
+                <img src={`/public/images/${logoIMG}`} className="size-50 mb-5"/>
+                <div className="bg-[#b8cbcd] w-60 p-4 rounded-md space-y-2">
                     <Input
                         id={title}
                         type="file"
-                        accept={allowedFiles[title]}
+                        accept={allowedFiles[title].join(',')}
                         onChange={handleFileChange}
                     />
                 </div>
@@ -178,6 +178,7 @@ function Banners() {
                     key={category.title}
                     color={category.color}
                     title={category.title}
+                    logoIMG={category.logo}
                 />
             ))}
         </div>

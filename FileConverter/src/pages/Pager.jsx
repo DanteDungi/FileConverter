@@ -9,7 +9,7 @@ export default function Pager(){
         <div className="flex items-center justify-start flex-col bg-[#FB9E3A]">
             <Header title="Our Offerings" className="justify-center"/>
             <div className="flex justify-center">
-                <img src="images/folders.png" className="size-50 mb-15"></img>
+                <img src="images/folders.png" className="size-50 mb-15" />
             </div>
             <Banners/>
         </div>
