@@ -126,7 +126,7 @@ export const Banner = ({ color, logoIMG, title }) => {
                 className="relative h-20 w-16 z-10 -mb-8 -ml-8"
                 alt="Pin"
             />
-            <div className={`w-full h-[64%] flex flex-col items-center justify-start ${color} rounded-xl  pt-8`}>
+            <div className={`w-full h-[70%] flex flex-col items-center justify-start ${color} rounded-xl pt-8`}>
                 <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">
                     {title}
                 </h1>
@@ -135,7 +135,7 @@ export const Banner = ({ color, logoIMG, title }) => {
                     <Input
                         id={title}
                         type="file"
-                        accept={allowedFiles[title].join(',')}
+                        accept={allowedFiles[title.toLowerCase()].join(',') ?? ""}
                         onChange={handleFileChange}
                     />
                 </div>
@@ -156,7 +156,7 @@ export const Banner = ({ color, logoIMG, title }) => {
                         </Select>
                     </div>
                 )}
-                <div className="mt-4">
+                <div className="absolute flex mt-125">
                     <Button
                         className="bg-gray-500 hover:bg-gray-600 text-white w-24 auto-mt"
                         disabled={!file || !targetFormat || doneConverting}
