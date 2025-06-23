@@ -1,6 +1,6 @@
 To convert files!!!(optionally)
 
-Desire to test the proejct:
+Desire to test the proejct?
     1. Go to the main directory - "FileConverter"
     2. Prep the project by downloading it's dependencies:
         npm install
