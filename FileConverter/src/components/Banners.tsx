@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/select";
 
 const categories = [
-    { color: "bg-[#DD4658]", logo: "pdf-logo.png", title: "Documents" },
-    { color: "bg-[#FEBB61]", logo: "mp3-logo.png", title: "Videos & sound" },
     { color: "bg-[#5793FB]", logo: "jpg-logo.png", title: "Images" },
+    { color: "bg-[#FEBB61]", logo: "mp3-logo.png", title: "Videos & sound" },
+    { color: "bg-[#DD4658]", logo: "pdf-logo.png", title: "Documents" },
 ];
 
 const allowedFiles = {
