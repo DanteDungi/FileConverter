@@ -145,51 +145,51 @@ export const Banner = ({ color, logoIMG, title }) => {
 
     return (
         <div className="flex flex-col items-center justify-start mx-10 bg-color-#00215E">
-        <img
-        src="images/pin.png"
-        className="relative h-20 w-16 z-10 -mb-8 -ml-8"
-        alt="Pin"
-        />
-        <div className={`w-full h-[70%] flex flex-col items-center justify-start ${color} rounded-xl pt-8`}>
-        <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">
-        {title}
-        </h1>
-        <img src={`images/${logoIMG}`} className="size-50 mb-5"/>
-        <div className="bg-[#b8cbcd] w-60 p-4 rounded-md space-y-2">
-        <Input
-        id={title}
-        type="file"
-        accept={allowedFiles[title.toLowerCase()].join(',') ?? ""}
-        onChange={handleFileChange}
-        />
-        </div>
-        {file && (
-            <div className="flex items-center justify-center mt-2">
-            <h3 className="mr-2">Convert to:</h3>
-            <Select onValueChange={setTargetFormat}>
-            <SelectTrigger>
-            <SelectValue placeholder="File type:" />
-            </SelectTrigger>
-            <SelectContent>
-            {allowedConversions.map((conv, idx) => (
-                <SelectItem key={idx} value={conv}>
-                {conv}
-                </SelectItem>
-            ))}
-            </SelectContent>
-            </Select>
+            <img
+                src="images/pin.png"
+                className="relative h-20 w-16 z-10 -mb-8 -ml-8"
+                alt="Pin"
+            />
+            <div className={`w-full h-[70%] flex flex-col items-center justify-start ${color} rounded-xl pt-8`}>
+            <h1 className="text-2xl my-4 font-bold underline underline-offset-8 decoration-2">
+                {title}
+            </h1>
+            <img src={`images/${logoIMG}`} className="size-50 mb-5"/>
+            <div className="bg-[#b8cbcd] w-60 p-4 rounded-md space-y-2">
+            <Input
+                id={title}
+                type="file"
+                accept={allowedFiles[title.toLowerCase()].join(',') ?? ""}
+                onChange={handleFileChange}
+            />
             </div>
-        )}
-        <div className="absolute flex mt-125">
-        <Button
-        className="bg-gray-500 hover:bg-gray-600 text-white w-24 auto-mt"
-        disabled={!file || !targetFormat || doneConverting}
-        onClick={handleConvertClick}
-        >
-        {doneConverting ? "Converting..." : "Convert"}
-        </Button>
-        </div>
-        </div>
+                {file && (
+                    <div className="flex items-center justify-center mt-2">
+                        <h3 className="mr-2">Convert to:</h3>
+                        <Select onValueChange={setTargetFormat}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="File type:" />
+                                </SelectTrigger>
+                            <SelectContent>
+                                {allowedConversions.map((conv, idx) => (
+                                    <SelectItem key={idx} value={conv}>
+                                    {conv}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                <div className="absolute flex mt-125">
+                    <Button
+                        className="bg-gray-500 hover:bg-gray-600 text-white w-24 auto-mt"
+                        disabled={!file || !targetFormat || doneConverting}
+                        onClick={handleConvertClick}
+                    >
+                        {doneConverting ? "Converting..." : "Convert"}
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 };
